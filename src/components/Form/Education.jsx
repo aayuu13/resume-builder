@@ -1,3 +1,23 @@
+const inputStyle = {
+  width: '100%',
+  border: '1px solid #ede9e3',
+  borderRadius: 10,
+  padding: '10px 14px',
+  fontSize: 13,
+  color: '#1c1917',
+  backgroundColor: '#faf9f7',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#a8a29e',
+  letterSpacing: '0.08em',
+  marginBottom: 6,
+  display: 'block',
+}
+
 export default function Education({ data, onChange }) {
   const updateItem = (index, field, value) => {
     const updated = [...data]
@@ -10,42 +30,46 @@ export default function Education({ data, onChange }) {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-slate-800">Education</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 600, color: '#1c1917', marginBottom: 4 }}>Education</h2>
+      <p style={{ fontSize: 13, color: '#a8a29e', marginBottom: 24 }}>Your academic background</p>
+
       {data.map((edu, i) => (
-        <div key={i} className="mb-4 rounded-xl border border-slate-200 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-indigo-500">Education #{i + 1}</span>
+        <div key={i} className="rounded-xl p-5 mb-4" style={{ border: '1px solid #ede9e3', backgroundColor: '#faf9f7' }}>
+          <div className="flex justify-between items-center mb-4">
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#a8a29e', letterSpacing: '0.08em' }}>EDUCATION {String(i + 1).padStart(2, '0')}</span>
             {data.length > 1 && (
-              <button onClick={() => removeItem(i)} className="text-xs text-red-400 hover:text-red-600">
-                Remove
-              </button>
+              <button onClick={() => removeItem(i)} style={{ fontSize: 11, color: '#c4bfba' }}>Remove</button>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-3">
             {[
-              { label: 'School / University', field: 'school', placeholder: 'The British College' },
-              { label: 'Degree', field: 'degree', placeholder: 'BSc (Hons) Computing' },
-              { label: 'Field of Study', field: 'field', placeholder: 'Computer Science' },
-              { label: 'From', field: 'from', placeholder: '2020' },
-              { label: 'To', field: 'to', placeholder: '2024' },
-              { label: 'Grade / GPA', field: 'grade', placeholder: 'First Class' },
+              { label: 'SCHOOL / UNIVERSITY', field: 'school', placeholder: 'The British College' },
+              { label: 'DEGREE', field: 'degree', placeholder: 'BSc (Hons) Computing' },
+              { label: 'FIELD OF STUDY', field: 'field', placeholder: 'Computer Science' },
+              { label: 'FROM', field: 'from', placeholder: '2021' },
+              { label: 'TO', field: 'to', placeholder: '2024' },
+              { label: 'GRADE / GPA', field: 'grade', placeholder: 'First Class Honours' },
             ].map(({ label, field, placeholder }) => (
               <div key={field}>
-                <label className="mb-1 block text-xs font-medium text-slate-500">{label}</label>
+                <label style={labelStyle}>{label}</label>
                 <input
                   type="text"
                   value={edu[field]}
-                  onChange={(e) => updateItem(i, field, e.target.value)}
+                  onChange={e => updateItem(i, field, e.target.value)}
                   placeholder={placeholder}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  style={inputStyle}
                 />
               </div>
             ))}
           </div>
         </div>
       ))}
-      <button onClick={addItem} className="text-sm font-medium text-indigo-500 hover:text-indigo-700">
-        + Add Another Education
+
+      <button
+        onClick={addItem}
+        style={{ fontSize: 13, color: '#78716c', fontWeight: 500 }}
+      >
+        + Add another education
       </button>
     </div>
   )

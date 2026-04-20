@@ -16,19 +16,28 @@ export default function Preview({ data }) {
 
   return (
     <div>
-      {/* Download button */}
-      <div className="flex justify-end mb-4">
+      {/* Preview header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 600, color: '#a8a29e', letterSpacing: '0.10em' }}>LIVE PREVIEW</p>
+          <p style={{ fontSize: 12, color: '#c4bfba', marginTop: 2 }}>Updates as you type</p>
+        </div>
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-5 py-2 rounded-xl shadow transition disabled:opacity-50"
+          className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition"
+          style={{
+            backgroundColor: downloading ? '#e7e5e4' : '#1c1917',
+            color: downloading ? '#a8a29e' : '#ffffff',
+            fontSize: 13,
+          }}
         >
-          {downloading ? 'Generating PDF...' : '⬇ Download PDF'}
+          {downloading ? 'Generating...' : '↓ Download PDF'}
         </button>
       </div>
 
-      {/* Resume preview — id is used by html2canvas */}
-      <div id="resume-preview">
+      {/* Resume */}
+      <div id="resume-preview" className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
         {template === 'modern' && <ModernTemplate data={data} />}
         {template === 'minimal' && <MinimalTemplate data={data} />}
         {template === 'professional' && <ProfessionalTemplate data={data} />}

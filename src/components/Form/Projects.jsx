@@ -1,3 +1,23 @@
+const inputStyle = {
+  width: '100%',
+  border: '1px solid #ede9e3',
+  borderRadius: 10,
+  padding: '10px 14px',
+  fontSize: 13,
+  color: '#1c1917',
+  backgroundColor: '#faf9f7',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#a8a29e',
+  letterSpacing: '0.08em',
+  marginBottom: 6,
+  display: 'block',
+}
+
 export default function Projects({ data, onChange }) {
   const updateItem = (index, field, value) => {
     const updated = [...data]
@@ -10,40 +30,41 @@ export default function Projects({ data, onChange }) {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-slate-800">Projects</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 600, color: '#1c1917', marginBottom: 4 }}>Projects</h2>
+      <p style={{ fontSize: 13, color: '#a8a29e', marginBottom: 24 }}>Showcase your best work</p>
+
       {data.map((proj, i) => (
-        <div key={i} className="mb-4 rounded-xl border border-slate-200 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-indigo-500">Project #{i + 1}</span>
+        <div key={i} className="rounded-xl p-5 mb-4" style={{ border: '1px solid #ede9e3', backgroundColor: '#faf9f7' }}>
+          <div className="flex justify-between items-center mb-4">
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#a8a29e', letterSpacing: '0.08em' }}>PROJECT {String(i + 1).padStart(2, '0')}</span>
             {data.length > 1 && (
-              <button onClick={() => removeItem(i)} className="text-xs text-red-400 hover:text-red-600">
-                Remove
-              </button>
+              <button onClick={() => removeItem(i)} style={{ fontSize: 11, color: '#c4bfba' }}>Remove</button>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-3">
             {[
-              { label: 'Project Name', field: 'name', placeholder: 'AnalystGuard' },
-              { label: 'Description', field: 'description', placeholder: 'A Python tool that detects conclusion flips in data analysis...' },
-              { label: 'Tech Stack', field: 'tech', placeholder: 'Python, Tkinter, Pandas, Matplotlib' },
-              { label: 'GitHub / Live Link', field: 'link', placeholder: 'github.com/yourname/project' },
+              { label: 'PROJECT NAME', field: 'name', placeholder: 'AnalystGuard' },
+              { label: 'DESCRIPTION', field: 'description', placeholder: 'A Python tool that detects conclusion flips...' },
+              { label: 'TECH STACK', field: 'tech', placeholder: 'Python, Tkinter, Pandas, Matplotlib' },
+              { label: 'GITHUB / LIVE LINK', field: 'link', placeholder: 'github.com/yourname/project' },
             ].map(({ label, field, placeholder }) => (
               <div key={field}>
-                <label className="mb-1 block text-xs font-medium text-slate-500">{label}</label>
+                <label style={labelStyle}>{label}</label>
                 <input
                   type="text"
                   value={proj[field]}
-                  onChange={(e) => updateItem(i, field, e.target.value)}
+                  onChange={e => updateItem(i, field, e.target.value)}
                   placeholder={placeholder}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  style={inputStyle}
                 />
               </div>
             ))}
           </div>
         </div>
       ))}
-      <button onClick={addItem} className="text-sm font-medium text-indigo-500 hover:text-indigo-700">
-        + Add Another Project
+
+      <button onClick={addItem} style={{ fontSize: 13, color: '#78716c', fontWeight: 500 }}>
+        + Add another project
       </button>
     </div>
   )

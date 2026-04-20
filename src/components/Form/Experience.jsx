@@ -1,4 +1,29 @@
+import { useState } from 'react'
+import { improveBullet } from '../../utils/aiHelpers'
+
+const inputStyle = {
+  width: '100%',
+  border: '1px solid #ede9e3',
+  borderRadius: 10,
+  padding: '10px 14px',
+  fontSize: 13,
+  color: '#1c1917',
+  backgroundColor: '#faf9f7',
+  outline: 'none',
+}
+
+const labelStyle = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#a8a29e',
+  letterSpacing: '0.08em',
+  marginBottom: 6,
+  display: 'block',
+}
+
 export default function Experience({ data, onChange }) {
+  const [loadingIndex, setLoadingIndex] = useState(null)
+
   const updateItem = (index, field, value) => {
     const updated = [...data]
     updated[index] = { ...updated[index], [field]: value }
@@ -17,61 +42,94 @@ export default function Experience({ data, onChange }) {
     onChange(updated)
   }
 
+  const handleImproveBullet = async (expIndex, bulletIndex) => {
+    const bullet = data[expIndex].bullets[bulletIndex]
+    if (!bullet.trim()) return
+    setLoadingIndex(`${expIndex}-${bulletIndex}`)
+    try {
+      const improved = await improveBullet(bullet, data[expIndex].role, data[expIndex].company)
+      updateBullet(expIndex, bulletIndex, improved.trim())
+    } catch (e) {
+      alert('Failed to improve bullet.')
+    }
+    setLoadingIndex(null)
+  }
+
   const addItem = () => onChange([...data, { company: '', role: '', from: '', to: '', current: false, bullets: [''] }])
   const removeItem = (i) => onChange(data.filter((_, idx) => idx !== i))
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold text-slate-800">Work Experience</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 600, color: '#1c1917', marginBottom: 4 }}>Work Experience</h2>
+      <p style={{ fontSize: 13, color: '#a8a29e', marginBottom: 24 }}>Your professional history</p>
+
       {data.map((exp, i) => (
-        <div key={i} className="mb-4 rounded-xl border border-slate-200 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-indigo-500">Experience #{i + 1}</span>
+        <div key={i} className="rounded-xl p-5 mb-4" style={{ border: '1px solid #ede9e3', backgroundColor: '#faf9f7' }}>
+          <div className="flex justify-between items-center mb-4">
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#a8a29e', letterSpacing: '0.08em' }}>EXPERIENCE {String(i + 1).padStart(2, '0')}</span>
             {data.length > 1 && (
-              <button onClick={() => removeItem(i)} className="text-xs text-red-400 hover:text-red-600">
-                Remove
-              </button>
+              <button onClick={() => removeItem(i)} style={{ fontSize: 11, color: '#c4bfba' }}>Remove</button>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-3">
             {[
-              { label: 'Company', field: 'company', placeholder: 'NepaTronix Engineering' },
-              { label: 'Role', field: 'role', placeholder: 'Software Developer' },
-              { label: 'From', field: 'from', placeholder: 'Jan 2024' },
-              { label: 'To', field: 'to', placeholder: 'Present' },
+              { label: 'COMPANY', field: 'company', placeholder: 'NepaTronix Engineering' },
+              { label: 'ROLE', field: 'role', placeholder: 'Software Developer' },
+              { label: 'FROM', field: 'from', placeholder: 'Jan 2024' },
+              { label: 'TO', field: 'to', placeholder: 'Present' },
             ].map(({ label, field, placeholder }) => (
               <div key={field}>
-                <label className="mb-1 block text-xs font-medium text-slate-500">{label}</label>
+                <label style={labelStyle}>{label}</label>
                 <input
                   type="text"
                   value={exp[field]}
-                  onChange={(e) => updateItem(i, field, e.target.value)}
+                  onChange={e => updateItem(i, field, e.target.value)}
                   placeholder={placeholder}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  style={inputStyle}
                 />
               </div>
             ))}
+
             <div>
-              <label className="mb-2 block text-xs font-medium text-slate-500">Bullet Points</label>
+              <label style={labelStyle}>BULLET POINTS</label>
               {exp.bullets.map((b, bIdx) => (
-                <input
-                  key={bIdx}
-                  type="text"
-                  value={b}
-                  onChange={(e) => updateBullet(i, bIdx, e.target.value)}
-                  placeholder="Describe what you did and the impact..."
-                  className="mb-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
+                <div key={bIdx} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={b}
+                    onChange={e => updateBullet(i, bIdx, e.target.value)}
+                    placeholder="Describe what you did and the impact..."
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button
+                    onClick={() => handleImproveBullet(i, bIdx)}
+                    disabled={loadingIndex === `${i}-${bIdx}`}
+                    className="rounded-lg px-3 transition"
+                    style={{
+                      fontSize: 11,
+                      border: '1px solid #ede9e3',
+                      backgroundColor: '#ffffff',
+                      color: loadingIndex === `${i}-${bIdx}` ? '#c4bfba' : '#78716c',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {loadingIndex === `${i}-${bIdx}` ? '...' : '✦ AI'}
+                  </button>
+                </div>
               ))}
-              <button onClick={() => addBullet(i)} className="text-xs text-indigo-400 hover:text-indigo-600">
+              <button
+                onClick={() => addBullet(i)}
+                style={{ fontSize: 12, color: '#a8a29e' }}
+              >
                 + Add bullet
               </button>
             </div>
           </div>
         </div>
       ))}
-      <button onClick={addItem} className="text-sm font-medium text-indigo-500 hover:text-indigo-700">
-        + Add Another Experience
+
+      <button onClick={addItem} style={{ fontSize: 13, color: '#78716c', fontWeight: 500 }}>
+        + Add another experience
       </button>
     </div>
   )
