@@ -309,14 +309,17 @@ export default function ATSLanding() {
               </p>
               <p style={{ fontSize: 11, color: '#a8a29e' }}>Build an optimized resume with AI</p>
             </div>
-            <a href="/builder" style={{
-              fontSize: 12, fontWeight: 600,
-              color: '#ffffff', backgroundColor: '#1c1917',
-              padding: '8px 16px', borderRadius: 8,
-              textDecoration: 'none',
-            }}>
-              Build Now →
-            </a>
+            <button
+  onClick={() => window.location.href = '/builder'}
+  style={{
+    fontSize: 12, fontWeight: 600,
+    color: '#ffffff', backgroundColor: '#1c1917',
+    padding: '8px 16px', borderRadius: 8,
+    border: 'none', cursor: 'pointer',
+  }}
+>
+  Build Now →
+</button>
           </div>
         </div>
       )}

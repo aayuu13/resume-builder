@@ -1,42 +1,66 @@
-console.log('KEY:', import.meta.env.VITE_OPENROUTER_API_KEY)
-async function askAI(prompt) {
-  // Use proxy API route in production, direct call in development
-  const isDev = import.meta.env.DEV
+const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY
 
-  if (isDev) {
-    // Direct call in local dev
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'http://localhost:5173',
-        'X-Title': 'Resume Builder'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-oss-120b:free',
-        messages: [{ role: 'user', content: prompt }]
-      })
+const MODELS = [
+  'openai/gpt-oss-120b:free',
+  'deepseek/deepseek-r1-0528:free',
+  'mistralai/mistral-small-3.2-24b-instruct:free',
+  'google/gemma-3-27b-it:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+]
+
+async function tryModel(model, prompt) {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEY}`,
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'Resume Builder'
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }]
     })
+  })
 
-    const data = await response.json()
-    console.log('AI response:', data)
+  const data = await response.json()
+  console.log(`Model ${model}:`, data)
 
-    if (!response.ok) throw new Error(data?.error?.message || 'AI request failed')
-    if (!data.choices?.length) throw new Error('Empty response from AI')
-    return data.choices[0].message.content
+  if (!response.ok) throw new Error(data?.error?.message || 'Request failed')
 
-  } else {
-    // Use serverless proxy in production
+  const text = data?.choices?.[0]?.message?.content
+  if (!text || text.trim() === '') throw new Error('Empty response')
+
+  return text
+}
+
+async function askAI(prompt) {
+  // Try each model until one works
+  for (const model of MODELS) {
+    try {
+      console.log(`Trying model: ${model}`)
+      const text = await tryModel(model, prompt)
+      console.log(`✅ Success with ${model}`)
+      return text
+    } catch (err) {
+      console.warn(`❌ ${model} failed:`, err.message)
+      continue
+    }
+  }
+
+  // All models failed — try proxy
+  console.log('All direct models failed, trying proxy...')
+  try {
     const response = await fetch('/api/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     })
-
     const data = await response.json()
-    if (!response.ok) throw new Error(data?.error || 'AI request failed')
+    if (!response.ok) throw new Error(data?.error || 'Proxy failed')
     return data.text
+  } catch (err) {
+    throw new Error('All AI models are currently unavailable. Please try again in a moment.')
   }
 }
 
@@ -67,11 +91,13 @@ export async function checkATS(resumeData, jobDescription) {
 
   const raw = await askAI(`
     You are an ATS expert. Analyze this resume against the job description.
-    Return ONLY a valid JSON object with:
-    - score: number from 0-100
-    - matched_keywords: array of matched keywords
-    - missing_keywords: array of missing keywords
-    - suggestions: array of 3 improvement tips
+    Return ONLY a valid JSON object with no extra text:
+    {
+      "score": number from 0-100,
+      "matched_keywords": ["keyword1", "keyword2"],
+      "missing_keywords": ["keyword1", "keyword2"],
+      "suggestions": ["tip1", "tip2", "tip3"]
+    }
 
     Resume:
     Name: ${resumeData?.personal?.name || ''}
@@ -84,17 +110,20 @@ export async function checkATS(resumeData, jobDescription) {
   const clean = raw.replace(/```json|```/g, '').trim()
   const start = clean.indexOf('{')
   const end = clean.lastIndexOf('}')
+  if (start === -1 || end === -1) throw new Error('Invalid JSON response from AI')
   return clean.slice(start, end + 1)
 }
 
 export async function checkATSRaw(resumeText, jobDescription) {
   const raw = await askAI(`
     You are an ATS expert. Analyze this resume text against the job description.
-    Return ONLY a valid JSON object with:
-    - score: number from 0-100
-    - matched_keywords: array of matched keywords
-    - missing_keywords: array of missing keywords
-    - suggestions: array of 3 improvement tips
+    Return ONLY a valid JSON object with no extra text:
+    {
+      "score": number from 0-100,
+      "matched_keywords": ["keyword1", "keyword2"],
+      "missing_keywords": ["keyword1", "keyword2"],
+      "suggestions": ["tip1", "tip2", "tip3"]
+    }
 
     Resume Text: ${resumeText.slice(0, 3000)}
     Job Description: ${jobDescription}
@@ -103,6 +132,7 @@ export async function checkATSRaw(resumeText, jobDescription) {
   const clean = raw.replace(/```json|```/g, '').trim()
   const start = clean.indexOf('{')
   const end = clean.lastIndexOf('}')
+  if (start === -1 || end === -1) throw new Error('Invalid JSON response from AI')
   return clean.slice(start, end + 1)
 }
 
