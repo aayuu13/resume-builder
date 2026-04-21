@@ -36,7 +36,8 @@ export default function PersonalInfo({ data, onChange, allData }) {
       )
       update('summary', summary)
     } catch (e) {
-      alert('Failed to generate summary. Check your API key.')
+      alert('Error: ' + e.message)
+      console.error(e)
     }
     setLoading(false)
   }
@@ -48,8 +49,8 @@ export default function PersonalInfo({ data, onChange, allData }) {
 
       <div className="space-y-4">
         {[
-          { label: 'FULL NAME', field: 'name', placeholder: 'Aayu Sharma' },
-          { label: 'EMAIL', field: 'email', placeholder: 'aayu@email.com' },
+          { label: 'FULL NAME', field: 'name', placeholder: 'Alex' },
+          { label: 'EMAIL', field: 'email', placeholder: 'user@email.com' },
           { label: 'PHONE', field: 'phone', placeholder: '+977 98XXXXXXXX' },
           { label: 'LOCATION', field: 'location', placeholder: 'Kathmandu, Nepal' },
           { label: 'LINKEDIN', field: 'linkedin', placeholder: 'linkedin.com/in/yourname' },

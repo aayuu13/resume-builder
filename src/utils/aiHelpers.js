@@ -1,31 +1,43 @@
-
+console.log('KEY:', import.meta.env.VITE_OPENROUTER_API_KEY)
 async function askAI(prompt) {
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-      'HTTP-Referer': 'http://localhost:5173',
-      'X-Title': 'Resume Builder'
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-oss-120b:free',
-      messages: [{ role: 'user', content: prompt }]
+  // Use proxy API route in production, direct call in development
+  const isDev = import.meta.env.DEV
+
+  if (isDev) {
+    // Direct call in local dev
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'http://localhost:5173',
+        'X-Title': 'Resume Builder'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-oss-120b:free',
+        messages: [{ role: 'user', content: prompt }]
+      })
     })
-  })
 
-  const data = await response.json()
-  console.log('OpenRouter response:', JSON.stringify(data, null, 2))
+    const data = await response.json()
+    console.log('AI response:', data)
 
-  if (!response.ok) {
-    throw new Error(data?.error?.message || 'OpenRouter API failed')
+    if (!response.ok) throw new Error(data?.error?.message || 'AI request failed')
+    if (!data.choices?.length) throw new Error('Empty response from AI')
+    return data.choices[0].message.content
+
+  } else {
+    // Use serverless proxy in production
+    const response = await fetch('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    })
+
+    const data = await response.json()
+    if (!response.ok) throw new Error(data?.error || 'AI request failed')
+    return data.text
   }
-
-  if (!data.choices || data.choices.length === 0) {
-    throw new Error('No response from AI. Try again.')
-  }
-
-  return data.choices[0].message.content
 }
 
 export async function improveBullet(bullet, role, company) {
@@ -75,16 +87,8 @@ export async function checkATS(resumeData, jobDescription) {
   return clean.slice(start, end + 1)
 }
 
-export async function tailorResume(resumeData, jobDescription) {
-  return await askAI(`
-    Rewrite this resume summary to better match the job description.
-    Return ONLY the improved summary, nothing else.
-    Current summary: ${resumeData.personal.summary}
-    Job Description: ${jobDescription}
-  `)
-}
 export async function checkATSRaw(resumeText, jobDescription) {
-  return await askAI(`
+  const raw = await askAI(`
     You are an ATS expert. Analyze this resume text against the job description.
     Return ONLY a valid JSON object with:
     - score: number from 0-100
@@ -93,7 +97,20 @@ export async function checkATSRaw(resumeText, jobDescription) {
     - suggestions: array of 3 improvement tips
 
     Resume Text: ${resumeText.slice(0, 3000)}
+    Job Description: ${jobDescription}
+  `)
 
+  const clean = raw.replace(/```json|```/g, '').trim()
+  const start = clean.indexOf('{')
+  const end = clean.lastIndexOf('}')
+  return clean.slice(start, end + 1)
+}
+
+export async function tailorResume(resumeData, jobDescription) {
+  return await askAI(`
+    Rewrite this resume summary to better match the job description.
+    Return ONLY the improved summary, nothing else.
+    Current summary: ${resumeData.personal.summary}
     Job Description: ${jobDescription}
   `)
 }

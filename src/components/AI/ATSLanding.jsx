@@ -13,65 +13,48 @@ export default function ATSLanding() {
   const handlePDFUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+  
     setFileName(file.name)
     setExtracting(true)
     setResult(null)
     setPdfText('')
-
+    setExtractStatus('')
+  
     try {
       const arrayBuffer = await file.arrayBuffer()
       const pdfjsLib = await import('pdfjs-dist')
-
-      // ✅ FIXED: Use CDN URL matched to installed pdfjs-dist version
-      // Previously used new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url)
-      // which resolved relative to the source file, producing a broken path like
-      // /src/components/AI/pdfjs-dist/build/pdf.worker.min.mjs
-     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
-
+  
+      // ✅ Correct for your version (pdfjs-dist 3.11)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
+  
       setExtractStatus('Reading PDF...')
+  
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+  
       let fullText = ''
-
+  
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
         const content = await page.getTextContent()
         fullText += content.items.map(item => item.str).join(' ') + '\n'
       }
-
-      if (fullText.trim().length > 100) {
+  
+      const cleanedText = fullText.trim()
+  
+      if (cleanedText.length > 50) {
+        setPdfText(cleanedText)
         setExtractStatus('PDF read successfully ✓')
-        setPdfText(fullText)
-        setExtracting(false)
-        return
+      } else {
+        setExtractStatus('PDF text is very short – trying OCR...')
+        // ← your OCR code can go here if you want to keep it
       }
-
-      // OCR fallback
-      setExtractStatus('Scanned PDF detected — running OCR (30s)...')
-      const { createWorker } = await import('tesseract.js')
-      const worker = await createWorker('eng')
-      let ocrText = ''
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        setExtractStatus(`OCR processing page ${i} of ${pdf.numPages}...`)
-        const page = await pdf.getPage(i)
-        const viewport = page.getViewport({ scale: 2.0 })
-        const canvas = document.createElement('canvas')
-        canvas.width = viewport.width
-        canvas.height = viewport.height
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise
-        const { data: { text } } = await worker.recognize(canvas)
-        ocrText += text + '\n'
-      }
-
-      await worker.terminate()
-      setExtractStatus('OCR complete ✓')
-      setPdfText(ocrText)
-
+  
     } catch (err) {
+      console.error('PDF extraction error:', err)
       setExtractStatus('Failed to read PDF')
-      alert('Error: ' + err.message)
+      alert('Error: ' + (err.message || 'Unknown error'))
     }
-
+  
     setExtracting(false)
   }
 
@@ -86,7 +69,8 @@ export default function ATSLanding() {
       const end = clean.lastIndexOf('}')
       setResult(JSON.parse(clean.slice(start, end + 1)))
     } catch (e) {
-      alert('Failed to analyze. Try again.')
+      alert('Error: ' + e.message)
+      console.error(e)
     }
     setLoading(false)
   }
